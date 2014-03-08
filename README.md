@@ -3,70 +3,72 @@ simplx_mirage
 
 Yes. You are seeing things 
 
-"In contrast to a hallucination, a mirage is a real optical phenomenon which can be captured on camera. ... What the image appears to represent, however, is determined by the interpretive faculties of the human mind." - Wikipedia
+_"In contrast to a hallucination, a mirage is a real optical phenomenon which can be captured on camera. ... What the image appears to represent, however, is determined by the interpretive faculties of the human mind."_ - Wikipedia
 
 Simplx Mirage is a simple Class library that helps you see and handle your MODX Templates and Resources as PHP Classes and Objects. Mirage is my 'optical illusion' to help you build web applications using only the very basic features of MODX.
 
- Using the awesomeness of MODX 
+##Using the awesomeness of MODX 
 
 Since day one with our dear CMS I have seen Templates as modx version of data types, or Classes.
 
 This is not only a working Metaphore but pretty much a practical reality as Templates in MODX do represent a logical entity with named fields. When a Resource chooses a Template it inherits these fields, extending its own set of fields. The Resource ends up representing the Template in much the same manner as an Object represents an instance of a Class.
 
-The MODX API twist
+##The MODX API twist
 
 The MODX API is plenty great for dealing with all aspects of the framework. This goes for the modResource class as well. The problem for me however, with my line of thinking, has been that the Template Variables that extend the Templates (and thus also the Resources) are very generic and volatile in their nature. By this l refer to the fact that one TV can be assigned to multiple Templates, and can also be removed from a Template at any time.
 The whole thing is made even more problematic by the fact that a Resource can change template at anytime and loose its set of attributes, and thus also its signature. Summing up, we have all the stuff in MODX to turn it in to the Rapid Application Studio for the web, but with a slightly incompatible model.
 
 Now lets put on our 3D goggles and see how Mirage lets us fix this!
 
-Conjuring up the illusion 
+##Conjuring up the illusion 
 
 Ok. First of all I have made a Template which is to represent a product on my site. This Template has a bunch of Template Variables such as category, price and product image.
 
 I have also made a container Resource called Product in the tree. This in turn is placed in a container called Objects. Like this,
 
-Objects 
-- Product 
+    Objects 
+    - Product 
 
 Remember, when using Mirage, the Product Template with its Template Variables is considered to be a type declaration, or Class.
 
 To create an Object of type Product, we now add a new Resource in our Product container and make sure to set the Template to Product. Lets say the new Resource is called 'Camera' gets the id 30.
 
-Objects 
-- Product 
--- Camera 
+    Objects 
+    - Product 
+    -- Camera 
 
 Create a Snippet (for testing purposes) .
 
 Be sure to include the simplx.mirage.php file.
 Declare a php class like this:
 
-class Product extends Simplx_Mirage_Object {} 
+`class Product extends Simplx_Mirage_Object {}`
 
 We can now get the Product Object like this,
 
-$camera = new Product(30); 
+`$camera = new Product(30); `
 
 Easy right? You can now thanks to the inner workings of Mirage use this object in plain old php fashion:
 
+```
 $camera->price = 45; 
 $camera->category = 'Cameras'; 
 $camera->save(); 
+```
 
 And you can use the Simplx_Mirage class to do this:
 
+```
 $ProductClass = Simplx_Mirage::getClass('Product'); 
 $cheapCameras = $ProductClass->getObjects(array( 'price:<'=>50, 'category:='=>'Cameras' )); 
+```
 
-
-Introducing Simplx Mirage Part II
----------------------------------
+#Introducing Simplx Mirage Part II
 
 Previous post showed the very minimum features to make Mirage useful. Now lets take a look at what else is in the box.
 
 
-A word on Prototyping
+##A word on Prototyping
 Simplx Mirage implements a prototypical style of inheritance. This means that instead of deriving attributes and functions using extending of php classes, you simply build on an existing php object. Note that i wrote object, not class.
 
 In prototypical inheritance you don't have the concept of classes. Objects, with state and all, are simply extended at runtime. Its generally done by setting a reference to a prototype, which is then used as a starting point for building the new entity.
@@ -74,7 +76,7 @@ A neat and handy feature in prototype orientation is the possibility to add prop
 
 Simplx Mirage does prototyping in a very straight forward way. Much like Javascript, you extend the MODX core model by simply creating a new class and setting its _prototype property to an instance of a modResource class. You can then add and override the prototypes properties and public methods just as if they where extended in a normal inheritance style.
 
-How stuff works - in short
+##How stuff works - in short
 Many things can be said about the highs and lows of php. One thing is clear though, its a darn flexible language! To make Mirage tick I have used many of php's pragmatic features such as Magic Methods, Introspection, Dynamic Class invocation and more.
 
 The Mirage package consists of three Classes at the moment,
@@ -89,14 +91,15 @@ In MODX, as you might know, Template Variables have a one-to-many relationship w
 
 Product_category
 which would resolve to:
-$myProduct->category
+
+`$myProduct->category`
 
 This general convention of using class name is used through out Mirage.
 A really nice feature is the automagic matching of class/template matching using class name.
 
 If you do the following:
 
-class Product extends Simplx_Mirage_Object {}
+`class Product extends Simplx_Mirage_Object {}`
 
 
 Mirage very gracefully helps you at by assuming that the class 'Product' represents a modResource which uses a modTemplate named 'Product', and that its associated Template Variables are prefixed with 'Product_'.
@@ -107,6 +110,7 @@ The possibilities to override properties and methods in the modResource class ar
 
 Let's revisit the Product class and add some new features. 
 
+```
 
 class Product extends Simplx_Mirage_Object {
   // Set a custom default value to the modResource pagetitle property
@@ -116,6 +120,7 @@ class Product extends Simplx_Mirage_Object {
     parent::save();
   }  
 }
+```
 
 
 Nothing out of the ordinary taking place above right? Well thanks, I'll take that as a compliment :) That was my grand plan actually, to hide all the details from you. What actually takes place is far from rocket science thankfully. 
@@ -137,8 +142,7 @@ If a property was requested, the name is used to perform a lookup in the _proper
 If a method call was made it is intercepted by the Magic  __call  function. This in turn uses php's Introspection features to lookup a matching method on the modResource prototype and simply pass the method call on, including any and all arguments. The resulting value, if any, is returned back.
 
 
-Introducing Simplx Mirage part III
-----------------------------------
+#Introducing Simplx Mirage part III
 
 So, in the last post i tried to demystify the inner workings of Mirage a bit. Now its time for some practical stuff again, namely, relationships between objects.
 
@@ -175,9 +179,11 @@ And then we have the Aggregates. In the world of Unix, Linux and Windows 7, and 
 
 Simplx Mirage uses the exact same metaphore to build hierarchical object relationships. Look at the following example:
 
+```
 $myObject = MyClass->getObject(10);
 $myNewAggr = $myObject->addAggregate(22); // lets assume the Class is named 'SomeAggrClass'
 $myNewComp = $myObject->addComposite('SomeCompClass');
+```
 
 The code above would result in the modResource with id 10 getting 2 child resources:
 
@@ -187,22 +193,27 @@ The code above would result in the modResource with id 10 getting 2 child resour
 
 Simple right? Lets add some type check etc.
 
-Order please! 
+##Order please! 
 If order was of limited concern to us we could stick with the above code. In my world of order and quest for readability l would want my associated objects to end up in a logical sub-structure. As is, the child resources are added in a jumble under their parent. This is of no concern to Mirage but to a system user or admin it would ruin usability.
 
 Simplx Mirage has a nice little configuration API which i will write more about in a later post. Today I will cover the Simplx_Mirage_Object->_useFoldersForAssoc  boolean flag.
 
 Simplx_Mirage_Object->_useFoldersForAssoc tells Mirage to store associated objects in folders which by default will use the same naming as the object type they represent. The above code would in other words expect a folder structure like this:
 
+```
+
 MyClass (folder)
 - SomeAggrClass (folder)
 - SomeCompClass (folder)
+```
 
 if _useFoldersForAssoc is set to true. If the expected structure is missing you will get an exception.
 
 This brings me to the most important practice:
 
 - Always wrap addAggregate, addComposite and their get and delete friends in more specialized Class members. Look at the following code and you will get the big point of this:
+
+```
 
 class BirthdayParty extends Simplx_Mirage_Object {
   public function __construct($id){
@@ -221,3 +232,4 @@ public function getInvitations(){
   .....
   }
 }
+```
