@@ -61,20 +61,23 @@ class Simplx_Mirage_Object
 
             if($class){
                 
-                $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), Got a valid class. Now lets create a Resource.');
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), Got a valid class. Now lets create a Resource.');
                 
-                $defaults = array();
-                
-                $newInstance = $modx->newObject('modResource', $defaults);
+                $newInstance = $modx->newObject('modResource');
                 
                 if(!$newInstance){
                     $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), $modx->newObject() returned false. Aborting.');
                     return false;
                     
                 }else{
-                    $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), New object instance created. Assigning it as prototype and continuing.');
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), New object instance created. Assigning it as prototype and continuing.');
                     $newInstance->set('template', $class->_id);
+                    $newInstance->save();
+                    
                     $prototype = $newInstance;
+
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), New object instance has id '.$prototype->get('id'));
+
                 }
                 
             }else{
@@ -85,184 +88,172 @@ class Simplx_Mirage_Object
             // Proceed...
         }
         
-        if (isset($id)) {
-            
-            /*
-            Remember that the Mirage Class is only a facade for a MODX Resource to add behavior and more on the fly.
-            So, next, we need to add a prototype object to the Mirage Class instance. This prototype is always a 
-            modResource with one assigned modTemplate.
-            */
-            
-            if ($prototype === null) {
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Got no prototype parameter. Creating a modResource instance.');
-                $prototype = $modx->getObject('modResource', $id);
-            } else {
-                if (!$prototype instanceof modResource) {
-                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), The prototype is not of type "modResource". Aborting.');
-                    return false;
-                }
-            }
-            
-            if (!$prototype === false) {
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Prototype is valid. ' . $prototype->toJSON());
-                /*
-                Default the $_classTypeName variable to the class name.
-                This means that Mirage will expect that there is a modTemplate with the same name
-                in the MODx system.
-                */
-                
-                if (!isset($classTypeName)) {
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Setting the _classTypeName variable to "' . get_class($this) . '".');
-                    $this->_classTypeName = get_class($this);
-                } else {
-                    // If we got a class name as parameter we use this.
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using classTypeName parameter "' . $classTypeName . '" as class name.');
-                    
-                    $this->_classTypeName = $classTypeName;
-                }
-                
-                /* 
-                Get the name and the id of the modTemplate that the Resource uses. 
-                */
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Trying to get the modTemplate object from the prototype.');
-                    
-                $typeName = $prototype->getOne('Template');
-                $typeName = $typeName->get('templatename');
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): The modTemplate is named "' . $typeName . '".');
-                
-                //if(!$this->_class){
-                //	   $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Can not get modTemplate. Type "'.$typeName.'" is not a compatible Class.');	    
-                //return false;	
-                //}
-                
-                
-                /* 
-                If the instance returned Simplx_Mirage_Object as class name the class has not
-                been extended. This meens that we have to default the class name to the modTemplate name.
-                */
-                
-                if ($this->_classTypeName == 'Simplx_Mirage_Object') {
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Class name is "Simplx_Mirage_Object" so we set it to the name of its modTemplate "' . $typeName . '".');
-                    
-                    $this->_classTypeName = $typeName;
-                    
-                }
-                
-                
-                if (!$typeName) {
-                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Can not get modTemplate from the modResource object. Aborting.');
-                    return false;
-                }
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): modTemplate name is "' . $typeName . '".');
-                
-                /* 
-                Lets now check so that the modResource actually is of type Aircraft, in other words
-                uses the correct Template.
-                */
-                
-                // Only fail though if the $classTypeName is not set to the default modResource.
-                if ($typeName != $this->_classTypeName) {
-                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Type "' . $typeName . '" not a compatible Class.');
-                    return false;
-                } else {
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): classTypeName is the same as modTemplate name and is therefor valid.');
-                }
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Finally assigning the $prototype object to the internal _prototype variable.');
-                
-                // Get a ref to the Simplx_Mirage_Class associated with this object. The Mirage Class has all default settings
-                // for the object.
-                $this->_class =& Simplx_Mirage::getClass($typeName);
-                
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Assigning all defaults from the Class.');
-                
-                // If we got a valid reference we assign all defaults. The Class defaults are stored in the Classes 
-                // default PropertySet.
-                
-                if ($this->_class) {
-                    $result = $this->setDefaultsFromClass($this->_class);
-                    
-                    if ($result) {
-                        if (self::$_debugmode)
-                            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Successfully assigned defaults from the Class.');
-                        
-                    } else {
-                        $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Unable to set Simplx_Mirage_Class defaults.');
-                        return false;
-                    }
-                } else {
-                    
-                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Unable to get a valid Simplx_Mirage_Class reference.');
-                    return false;
-                    
-                }
-                
-                $this->_prototype = $prototype;
-                
-                /*
-                If we are supposed to use prefixed TVs, lets see that we have it configured.
-                Per default, we use the Class name as prefix.
-                */
-                
-                if ($this->_prefixTvs) {
-                    
-                    if (!isset($this->_tvPrefix)) {
-                        if (self::$_debugmode)
-                            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using Class name as default prefix.');
-                        $tempClsName = $this->_classTypeName;
-                    } else {
-                        $tempClsName = $this->_tvPrefix;
-                    }
-                    
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using prefix "' . $tempClsName . '" for TVs.');
-                    
-                    
-                    /* 
-                    Have we configured to use only lcase prefixes? If so fix class name before
-                    building the prefix string.
-                    */
-                    if ($this->_tvPrefixToLower) {
-                        $tempClsName = strtolower($tempClsName);
-                    }
-                    
-                    $this->_tvPrefix = ($tempClsName . $this->_tvPrefixSeparator);
-                    
-                    if (self::$_debugmode)
-                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Complete prefix is "' . $this->_tvPrefix . '".');
-                }
-                
-                
-                
-            } else {
-                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->__construct(): Could not find any modResource instance with id ' . $id . '.');
-            }
-            
-        } else {
+        /*
+        Remember that the Mirage Class is only a facade for a MODX Resource to add behavior and more on the fly.
+        So, next, we need to add a prototype object to the Mirage Class instance. This prototype is always a 
+        modResource with one assigned modTemplate.
+        */
+        
+        if ($prototype === null) {
             
             if (self::$_debugmode)
-                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): id parameter was empty.');
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Got no prototype parameter. Creating a modResource instance.');
+            $prototype = $modx->getObject('modResource', $id);
+        } else {
+            if (!$prototype instanceof modResource) {
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), The prototype is not of type "modResource". Aborting.');
+                return false;
+            }
+        }
+        
+        if (!$prototype === false) {
             
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Prototype is valid. ' . $prototype->toJSON());
             /*
-            Create new Resource?
+            Default the $_classTypeName variable to the class name.
+            This means that Mirage will expect that there is a modTemplate with the same name
+            in the MODx system.
             */
             
+            if (!isset($classTypeName)) {
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Setting the _classTypeName variable to "' . get_class($this) . '".');
+                $this->_classTypeName = get_class($this);
+            } else {
+                // If we got a class name as parameter we use this.
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using classTypeName parameter "' . $classTypeName . '" as class name.');
+                
+                $this->_classTypeName = $classTypeName;
+            }
+            
+            /* 
+            Get the name and the id of the modTemplate that the Resource uses. 
+            */
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Trying to get the modTemplate object from the prototype.');
+                
+            $typeName = $prototype->getOne('Template');
+            $typeName = $typeName->get('templatename');
+            
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): The modTemplate is named "' . $typeName . '".');
+            
+            //if(!$this->_class){
+            //	   $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Can not get modTemplate. Type "'.$typeName.'" is not a compatible Class.');	    
+            //return false;	
+            //}
+            
+            
+            /* 
+            If the instance returned Simplx_Mirage_Object as class name the class has not
+            been extended. This meens that we have to default the class name to the modTemplate name.
+            */
+            
+            if ($this->_classTypeName == 'Simplx_Mirage_Object') {
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Class name is "Simplx_Mirage_Object" so we set it to the name of its modTemplate "' . $typeName . '".');
+                
+                $this->_classTypeName = $typeName;
+                
+            }
+            
+            
+            if (!$typeName) {
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Can not get modTemplate from the modResource object. Aborting.');
+                return false;
+            }
+            
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): modTemplate name is "' . $typeName . '".');
+            
+            /* 
+            Lets now check so that the modResource actually is of type Aircraft, in other words
+            uses the correct Template.
+            */
+            
+            // Only fail though if the $classTypeName is not set to the default modResource.
+            if ($typeName != $this->_classTypeName) {
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Type "' . $typeName . '" not a compatible Class.');
+                return false;
+            } else {
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): classTypeName is the same as modTemplate name and is therefor valid.');
+            }
+            
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Finally assigning the $prototype object to the internal _prototype variable.');
+            
+            // Get a ref to the Simplx_Mirage_Class associated with this object. The Mirage Class has all default settings
+            // for the object.
+            $this->_class =& Simplx_Mirage::getClass($typeName);
+            
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Assigning all defaults from the Class.');
+            
+            // If we got a valid reference we assign all defaults. The Class defaults are stored in the Classes 
+            // default PropertySet.
+            
+            if ($this->_class) {
+                $result = $this->setDefaultsFromClass($this->_class);
+                
+                if ($result) {
+                    if (self::$_debugmode)
+                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Successfully assigned defaults from the Class.');
+                    
+                } else {
+                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Unable to set Simplx_Mirage_Class defaults.');
+                    return false;
+                }
+            } else {
+                
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Unable to get a valid Simplx_Mirage_Class reference.');
+                return false;
+                
+            }
+            
+            $this->_prototype = $prototype;
+            
+            /*
+            If we are supposed to use prefixed TVs, lets see that we have it configured.
+            Per default, we use the Class name as prefix.
+            */
+            
+            if ($this->_prefixTvs) {
+                
+                if (!isset($this->_tvPrefix)) {
+                    if (self::$_debugmode)
+                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using Class name as default prefix.');
+                    $tempClsName = $this->_classTypeName;
+                } else {
+                    $tempClsName = $this->_tvPrefix;
+                }
+                
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Using prefix "' . $tempClsName . '" for TVs.');
+                
+                
+                /* 
+                Have we configured to use only lcase prefixes? If so fix class name before
+                building the prefix string.
+                */
+                if ($this->_tvPrefixToLower) {
+                    $tempClsName = strtolower($tempClsName);
+                }
+                
+                $this->_tvPrefix = ($tempClsName . $this->_tvPrefixSeparator);
+                
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Complete prefix is "' . $this->_tvPrefix . '".');
+            }
+            
+            
+            
+        } else {
+            $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->__construct(): Could not find any modResource instance with id ' . $id . '.');
         }
+
         
         if (self::$_debugmode)
             $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Assigning internal id.');
