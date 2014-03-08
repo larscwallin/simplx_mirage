@@ -63,14 +63,18 @@ class Simplx_Mirage_Object
                 
                 $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), Got a valid class. Now lets create a Resource.');
                 
-                $newInstance = $class->newObject();
+                $defaults = array();
+                
+                $newInstance = $modx->newObject('modResource', $defaults);
+                
+                $newInstance->set('template', $class->_id);
                 
                 if(!$newInstance){
                     $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Simplx_Mirage_Class->newObject() returned false. Aborting.');
                     return false;
                     
                 }else{
-                    $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), new object instance created. Assigning it as prototype.');
+                    $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), New object instance created. Assigning it as prototype.');
                     $prototype = $newInstance;
                 }
                 
