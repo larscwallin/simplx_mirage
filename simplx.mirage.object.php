@@ -47,12 +47,39 @@ class Simplx_Mirage_Object
     {
         global $modx;
         $state = null;
+        $class = null;
         
         if (self::$_debugmode)
             $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__construct(): Constructor args, id= ' . $id . ', and classtypeName = "' . $classTypeName . '"');
         
-        if (!isset($id)) {
-            
+        if ($id == null and $prototype == null) {
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), both id and $resource parameters were empty. Creating new Instance.');
+
+            $typeName = get_class($this);
+        
+            $class =& Simplx_Mirage::getClass($typeName);
+
+            if($class){
+                
+                $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), Got a valid class. Now lets create a Resource.');
+                
+                $newInstance = $class->newObject();
+                
+                if(!$newInstance){
+                    $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Simplx_Mirage_Class->newObject() returned false. Aborting.');
+                    return false;
+                    
+                }else{
+                    $modx->log(modX::LOG_LEVEL_LOG, 'Simplx_Mirage_Object: __construct(), new object instance created. Assigning it as prototype.');
+                    $prototype = $newInstance;
+                }
+                
+            }else{
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object: __construct(), Simplx_Mirage::getClass() returned false. Aborting.');
+                return false;
+            }
+        }else{
+            // Proceed...
         }
         
         if (isset($id)) {
@@ -242,7 +269,6 @@ class Simplx_Mirage_Object
         
         // Also set the parent.
         $this->_parent = $this->_prototype->get('parent');
-        
         
         return true;
         
@@ -1015,13 +1041,13 @@ class Simplx_Mirage_Object
         global $modx;
         
         if (self::$_debugmode)
-            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__call("' . $name . '","' . json_encode($value) . '")');
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__call("' . $name . '","' . json_encode($params) . '")');
         
         // If the method was not found, defer to the prototype.
         if (isset($this->_prototype)) {
             
             $reflectionClass = new ReflectionClass(get_class($this->_prototype));
-            return $reflectionClass->getMethod($name)->invokeArgs($params);
+            return $reflectionClass->getMethod($name)->invokeArgs($this->_prototype,$params);
         }
     }
     
@@ -1043,7 +1069,7 @@ class Simplx_Mirage_Object
             
             $reflectionClass = new ReflectionClass(get_class($this->_prototype));
             // I think this should work even on static methods...	
-            return $reflectionClass->getMethod($name)->invokeArgs($params);
+            return $reflectionClass->getMethod($name)->invokeArgs(null,$params);
         }
         
     }
