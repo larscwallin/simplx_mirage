@@ -685,7 +685,8 @@ class Simplx_Mirage_Class
                     if (self::$_debugmode)
                         $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Class->newObject() : Creating the Simplx_Mirage_Object instance.');
                     
-                    $result = new Simplx_Mirage_Object($prototypeId, $prototype);
+                        $result = new Simplx_Mirage_Object($prototypeId, $prototype);
+
                 } else {
                     if (self::$_debugmode)
                         $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Class->newObject() : Creating the custom class instance.');
@@ -694,6 +695,7 @@ class Simplx_Mirage_Class
                 }
                 
                 if ($result) {
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Class->newObject() : Returning Simplx_Mirage_Object instance '.$result->get('id'));
                     return $result;
                 } else {
                     $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage->newObject(): Unable to create Simplx_Mirage_Object object for resource.');
