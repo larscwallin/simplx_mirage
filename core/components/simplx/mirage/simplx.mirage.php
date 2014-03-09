@@ -88,10 +88,24 @@ class Simplx_Mirage
      * @param $id The id of the Object which to fetch.
      * @return Simplx_Mirage_Object|false 
      */
-    public static function getObject($className, $id)
+    public static function getObject($id)
     {
-        if ($className && $id) {
+        global $modx;
+        $object = null;
+        
+        if ($id) {
+            $object = new Simplx_Mirage_Object($id);
             
+            if($object){
+                return $object;
+            }else{
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage->getObject(): Simplx_Mirage_Object() returned False. Aborting.');
+                return false;                
+            }
+            
+        }else{
+            $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage->getObject(): Missing parameter id. Aborting.');
+            return false;
         }
     }
     
