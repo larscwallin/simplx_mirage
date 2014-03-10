@@ -731,11 +731,21 @@ class Simplx_Mirage_Object
                 $result = $composite->save();
                 
                 if ($result) {
+                    
+                    // Invoke save event for the composite object
                     $modx->invokeEvent('OnDocFormSave', array(
                         'mode' => 'new',
-                        'resource' => $this->_prototype,
+                        'resource' => $composite,
                         'id' => $composite->get('id')
                     ));
+
+                    // Invoke save event for the prototype object
+                    $modx->invokeEvent('OnDocFormSave', array(
+                        'mode' => 'upd',
+                        'resource' => $this->_prototype,
+                        'id' => $this->_id
+                    ));
+                    
                 } else {
                     $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->addComposite():  Unable to get the save the new composite Resource modResource->save() returned false. Aborting.');
                     return false;
@@ -889,6 +899,12 @@ class Simplx_Mirage_Object
                 // Unable to create class. Aborting.
                 
             }
+            
+            $modx->invokeEvent('OnDocFormSave', array(
+                'mode' => 'upd',
+                'resource' => $this->_prototype,
+                'id' => $this->_id
+            ));
             
             return $aggregate;
             
