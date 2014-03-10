@@ -1087,7 +1087,7 @@ class Simplx_Mirage_Object
         global $modx;
         
         if (self::$_debugmode)
-            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__callStatic("' . $name . '","' . json_encode($value) . '")');
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->__callStatic("' . $name . '","' . json_encode($params) . '")');
         
         // If the method was not found, defer to the prototype.
         if (isset($this->_prototype)) {
