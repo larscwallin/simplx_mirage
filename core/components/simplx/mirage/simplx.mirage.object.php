@@ -1012,7 +1012,22 @@ class Simplx_Mirage_Object
                     $this->_properties[$name] = $value;
                     
                     if ($this->_persistOnAssign) {
-                        return $this->_prototype->setTVValue($tvName, $value);
+
+                        $result = $this->_prototype->setTVValue($tvName, $value);
+                        
+                        if($result){
+                            
+                            $modx->invokeEvent('OnDocFormSave', array(
+                                'mode' => 'upd',
+                                'resource' => $this->_prototype,
+                                'id' => $this->_id
+                            ));
+                            return true;
+                            
+                        }else{
+                            $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->__set(): modResource->setTVValue("'.$tvName.'", "'.$value.'")');
+                            return false;
+                        }                        
                     }
                     
                 } else {
