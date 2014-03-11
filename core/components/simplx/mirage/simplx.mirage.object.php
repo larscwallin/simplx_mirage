@@ -19,7 +19,7 @@ class Simplx_Mirage_Object
     public $_persistOnAssign = null;
     public $_useFoldersForAssoc = null;
     public $_createFoldersForAssoc = null;
-    
+    public $_defaultObjectLocation = 0;    
     public $_id;
     public $_tvsLoaded = false;
     public $_assocNameMap = array();
@@ -302,6 +302,7 @@ class Simplx_Mirage_Object
                 $this->_persistOnAssign          = is_null($this->_persistOnAssign) ? $classObject->_persistOnAssign : $this->_persistOnAssign;
                 $this->_useFoldersForAssoc       = is_null($this->_useFoldersForAssoc) ? $classObject->_useFoldersForAssoc : $this->_useFoldersForAssoc;
                 $this->_createFoldersForAssoc    = is_null($this->_createFoldersForAssoc) ? $classObject->_createFoldersForAssoc : $this->_createFoldersForAssoc;
+                $this->_defaultObjectLocation    = is_null($this->_defaultObjectLocation) ? $classObject->_defaultObjectLocation : $this->_defaultObjectLocation;
                 
             } else {
                 $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->setClassDefaults(), Unable to get a valid Simplx_Mirage_Class reference.');
@@ -401,6 +402,10 @@ class Simplx_Mirage_Object
             }
             
             if ($result) {
+                
+                // Set save location from the _defaultObjectLocation property
+                $this->_prototype->parent = $this->_defaultObjectLocation;
+                
                 $result = $this->_prototype->save();
                 
                 if ($result) {
