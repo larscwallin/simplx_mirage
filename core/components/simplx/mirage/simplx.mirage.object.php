@@ -19,7 +19,8 @@ class Simplx_Mirage_Object
     public $_persistOnAssign = null;
     public $_useFoldersForAssoc = null;
     public $_createFoldersForAssoc = null;
-    public $_defaultObjectLocation = 0;    
+    public $_defaultObjectLocation = 0;
+    
     public $_id;
     public $_tvsLoaded = false;
     public $_assocNameMap = array();
@@ -74,9 +75,11 @@ class Simplx_Mirage_Object
                     $newInstance->set('template', $class->_id);
                     $newInstance->save();
                     
+                    $id = $newInstance->get('id');
+                    
                     $prototype = $newInstance;
 
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), New object instance has id '.$prototype->get('id'));
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object: __construct(), New object instance has id '.$id);
 
                 }
                 
@@ -786,7 +789,7 @@ class Simplx_Mirage_Object
      * @param 
      * @return 
      */
-    public function addAggregate($referenceId, $altObjectName = null)
+    public function addAggregate($reference, $altObjectName = null)
     {
         global $modx;
         $aggregateClass;
@@ -796,20 +799,34 @@ class Simplx_Mirage_Object
         $list;
         
         if (self::$_debugmode)
-            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Object ref id "' . $referenceId . '".');
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Object reference "' . get_class($reference) . '".');
         
-        if (isset($referenceId)) {
-            
+        if($reference instanceof Simplx_Mirage_Object){
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Object reference is instance of Simplx_Mirage_Object.');
+            $aggregateObject = $reference->_prototype;
+        }elseif($reference instanceof modResource){
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Object reference is instance of modResource.');
+            $aggregateObject = $reference;
+        }elseif(is_numeric($reference) and $reference >= 0){
             // An aggregate is represented as a SymLink, so we need to load the original, source Resource first.
-            $aggregateObject = $modx->getObject('modResource', $referenceId);
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Object reference is a numerical id.');
+            $aggregateObject = $modx->getObject('modResource', $reference);
             
             if (!$aggregateObject) {
-                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->addAggregate():  The associated object with id "' . $referenceId . '" does not exist. Aborting.');
+                $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->addAggregate():  The associated object with id "' . $reference . '" does not exist. Aborting.');
                 return false;
             } else {
                 if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Found Object id "' . $referenceId . '".');
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Found Object id "' . $reference . '".');
             }
+            
+        }else{
+            $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->addAggregate():  Parameter $reference is invalid. Aborting.');
+            return false;
+        }
+        
+        if (isset($reference)) {
+            
             
             // Getting the Class / Template
             // Temporary hack to get template name. This should be done in the Simplx_Mirage class.
@@ -828,7 +845,7 @@ class Simplx_Mirage_Object
             $classTypeName = $aggregateClass->_prototype->get('templatename');
             
             if (self::$_debugmode)
-                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Got a reference to the Composite Class "' . $classTypeName . '".');
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Got a reference to the Class "' . $classTypeName . '".');
             
             if ($this->_useFoldersForAssoc) {
                 // Get the id of the Container Resource in which to place the new aggregate Resource.
@@ -885,7 +902,7 @@ class Simplx_Mirage_Object
                     $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->addAggregate():  Creating new Resource with Class/Template "' . $aggregateClass->_id . '".');
                 
                 $aggregate = $modx->newObject('modSymLink');
-                $aggregate->set('pagetitle', $classTypeName);
+                $aggregate->set('pagetitle', $aggregateObject->get('pagetitle'));
                 $aggregate->set('parent', $parent);
                 $aggregate->set('template', $aggregateClass->_id);
                 $aggregate->set('content', $aggregateObject->get('id'));
@@ -905,6 +922,7 @@ class Simplx_Mirage_Object
                 
             }
             
+            // Invoke save event for the prototype object
             $modx->invokeEvent('OnDocFormSave', array(
                 'mode' => 'upd',
                 'resource' => $this->_prototype,
@@ -1033,6 +1051,7 @@ class Simplx_Mirage_Object
                     $this->_properties[$name] = $value;
                     
                     if ($this->_persistOnAssign) {
+                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object__set(): persistOnAssign is set to True, calling modResource->setTVValue().');
 
                         $result = $this->_prototype->setTVValue($tvName, $value);
                         
@@ -1048,7 +1067,8 @@ class Simplx_Mirage_Object
                         }else{
                             $modx->log(modX::LOG_LEVEL_ERROR, 'Simplx_Mirage_Object->__set(): modResource->setTVValue("'.$tvName.'", "'.$value.'")');
                             return false;
-                        }                        
+
+                        }
                     }
                     
                 } else {
