@@ -1,7 +1,7 @@
 <?php
 
-require_once($modx->getOption('core_path').'/components/simplx/mirage/simplx_mirage_class.php');
-require_once($modx->getOption('core_path').'/components/simplx/mirage/simplx_mirage_object.php');
+require_once($modx->getOption('core_path').'/components/simplx/mirage/simplx.mirage.class.php');
+require_once($modx->getOption('core_path').'/components/simplx/mirage/simplx.mirage.object.php');
 
 /**
  * Simplx_Mirage is the base class which govern all Simplx_Mirage_Class / Simplx_Mirage_Object
@@ -66,7 +66,16 @@ class Simplx_Mirage
      * @var array 
      */
     public static $_objectStore = array();
-    
+
+    /**
+     * Global cache array which store query array instances paired with resulting array of initilized Simplx_Mirage_Object objects for
+     * duration of the request.  
+     *
+     * @access public
+     * @static
+     * @var array 
+     */
+    public static $_queryStore = array();    
     
     /**
      * Class constructor. Not implemented at this time.
@@ -81,7 +90,6 @@ class Simplx_Mirage
     
     /**
      * This is a global utility method which will return an object of a specific id. 
-     * This method is NOT IMPLEMENTED at this time.
      *
      * @static
      * @param $className The class name of the Object which to fetch.
@@ -94,7 +102,16 @@ class Simplx_Mirage
         $object = null;
         
         if ($id) {
-            $object = new Simplx_Mirage_Object($id);
+            
+            if(array_key_exists($id, Simplx_Mirage::$_objectStore)){
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObject(): Object instance "' . $id . '" found in the $_objectStore cache.');
+                $object = Simplx_Mirage::$_objectStore[$id];
+            }else{
+                $object = new Simplx_Mirage_Object($id);    
+            }
+            
+            
             
             if($object){
                 return $object;
@@ -285,7 +302,7 @@ class Simplx_Mirage
      * @param $query XPDO query style array constraining results.	
      * @return array|false 
      */
-    public static function getObjects($className, $query = array(), $prototypeName = 'modResource', $fields = null)
+    public static function getObjects($className, $query = array(), $prototypeName = 'modResource', $fields = null, $forceCacheRefresh = false)
     {
         global $modx;
         $resultList      = array();
@@ -295,10 +312,37 @@ class Simplx_Mirage
         $prefix          = '';
         $separator       = '';
         $classProperties = array();
+        $queryHash      = '';
+        $queryString = '';
         
         if (self::$_debugmode)
             $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObjects(): Params $className = "' . $className . '", $query = "' . json_encode($query) . '", $prototypeName = "' . $prototypeName . '".');
         
+        // Create a hash from the query to use as unique cache key.
+        $queryString = serialize($query);
+        $queryHash = md5($queryString);
+        
+        // Check for cached collection instance
+        if(array_key_exists($queryHash, Simplx_Mirage::$_queryStore) && $forceCacheRefresh == false){
+            $collection = Simplx_Mirage::$_queryStore[$queryHash];
+            
+            // Before we return we check to see that the returned, cached collection looks ok
+            // If not we proceed to refresh the cache.
+            if($collection){
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObjects(): Found a cached collection for query hash "' . $queryHash . '".');            
+                
+                return $collection;
+            }else{
+                if (self::$_debugmode)
+                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObjects(): Query hash "' . $queryHash . '" was not found in the cache. Proceeding to fetch collection.');            
+
+                // Cache was invalid so we proceed to refresh the cache.
+            }
+            
+        }else{
+            // Nothing in the cache matched the current query so we proceed.
+        }
         
         
         // Get the Simplx_Mirage_Class which wraps the modTemplate.
@@ -436,6 +480,12 @@ class Simplx_Mirage
         }
         
         if (is_array($objects)) {
+            if (self::$_debugmode)
+                $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObjects(): Caching query result using hash "' . $queryHash . '".');            
+
+            // Cache the collection using the query hash as key.
+            Simplx_Mirage::$_queryStore[$queryHash] =& $resultList;    
+            
             return $resultList;
         } else {
             return false;
@@ -673,5 +723,3 @@ class Simplx_Mirage
     }
     
 }
-
-
