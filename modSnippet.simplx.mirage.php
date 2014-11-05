@@ -166,9 +166,13 @@ switch($get){
     
     }
     
-    //$mirageObject = new Simplx_Mirage_Object($oid); 
     $mirageObject = Simplx_Mirage::getObject($oid);
-    $result = $mirageObject->toJSON();
+    
+    if($property){
+	$result = $mirageObject->$property;    
+    }else{
+        $result = $mirageObject->toJSON();        
+    }
     break;
   
   default:
