@@ -1,5 +1,5 @@
 <?php
-require_once($modx->getOption('core_path').'/components/simplx/mirage/simplx_mirage.php');
+require_once($modx->getOption('core_path').'components/simplx/mirage/simplx.mirage.php');
 
 $result = false;
 
@@ -11,8 +11,11 @@ if($debugmode){
   
 }
 
-$modx->log(modX::LOG_LEVEL_DEBUG, 'Snippet simplx.mirage : ');		 
-
+$modx->log(modX::LOG_LEVEL_DEBUG, '');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, '-----------------------------------------------------------------------------------------------------');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, '');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, 'Running Snippet simplx.mirage : ');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, '');		 
 /*
   Check if the Simplx Mirage setup Snippet has run. Otherwise do so.
   The "simplx.mirage.setup.hasrun" flag is a System Setting which is
@@ -163,7 +166,8 @@ switch($get){
     
     }
     
-    $mirageObject = new Simplx_Mirage_Object($oid); 
+    //$mirageObject = new Simplx_Mirage_Object($oid); 
+    $mirageObject = Simplx_Mirage::getObject($oid);
     $result = $mirageObject->toJSON();
     break;
   
@@ -172,6 +176,10 @@ switch($get){
     $result = '';
 
 }
+
+$modx->log(modX::LOG_LEVEL_DEBUG, '');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, '-----------------------------------------------------------------------------------------------------');		 
+$modx->log(modX::LOG_LEVEL_DEBUG, '');		 
 
 // Only return result if its valid.
 if($result){
