@@ -719,10 +719,24 @@ class Simplx_Mirage_Class
      * @param 
      * @return 
      */
-    public function getObject($id)
+    public function getObject($id, $forceCacheRefresh = false)
     {
         
-        $object = new Simplx_Mirage_Object($id);
+        // Check for cached object instance
+        if(array_key_exists($id, Simplx_Mirage::$_objectStore) && $forceCacheRefresh == false){
+            $object = Simplx_Mirage::$_objectStore[$id];
+        }else{
+            $object = new Simplx_Mirage_Object($id);
+
+            if ($object) {
+                Simplx_Mirage::$_objectStore[$id] =& $object;    
+            } else {
+                
+            }
+
+        }
+        
+        
         if ($object) {
             return $object;
         } else {
