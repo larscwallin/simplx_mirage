@@ -3,7 +3,7 @@ require_once($modx->getOption('core_path').'components/simplx/mirage/simplx.mira
 
 $result = false;
 
-if($debugmode){
+if($debugmode == '1'){
   $modx->setLogLevel(modX::LOG_LEVEL_DEBUG);
   Simplx_Mirage::$_debugmode = true;
   Simplx_Mirage_Class::$_debugmode = true;
