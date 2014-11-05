@@ -267,6 +267,12 @@ class Simplx_Mirage_Object
         // Also set the parent.
         $this->_parent = $this->_prototype->get('parent');
         
+        if (self::$_debugmode)
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->_construct(): Caching Object instance reference in the Simplx_Mirage::$_objectStore cache.');            
+
+        // At last we cache this instance by reference.
+        Simplx_Mirage::$_objectStore[$this->_id] =& $this;
+
         return true;
         
     }
