@@ -318,8 +318,8 @@ class Simplx_Mirage
         if (self::$_debugmode)
             $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage->getObjects(): Params $className = "' . $className . '", $query = "' . json_encode($query) . '", $prototypeName = "' . $prototypeName . '".');
         
-        // Create a hash from the query to use as unique cache key.
-        $queryString = serialize($query);
+        // Create a hash from the query, class name and fields collection to use as unique cache key.
+        $queryString = json_encode($query).$className.$fields;
         $queryHash = md5($queryString);
         
         // Check for cached collection instance
