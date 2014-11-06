@@ -19,7 +19,7 @@ class Simplx_Mirage_Object
     public $_persistOnAssign = null;
     public $_useFoldersForAssoc = null;
     public $_createFoldersForAssoc = null;
-    public $_defaultObjectLocation = 0;
+    public $_defaultObjectLocation = ńull;
     
     public $_id;
     public $_tvsLoaded = false;
