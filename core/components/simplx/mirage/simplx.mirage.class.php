@@ -425,11 +425,22 @@ class Simplx_Mirage_Class
                     'minItems' => (array_key_exists('minItems', $inputProperties) ? $inputProperties['minItems'] : ''),
                     'maxItems' => (array_key_exists('maxItems', $inputProperties) ? $inputProperties['maxItems'] : ''),
                     'uniqueItems' => (array_key_exists('uniqueItems', $inputProperties) ? $inputProperties['uniqueItems'] : ''),
-                    'enum' => json_encode($elementArray),
                     'minLength' => (array_key_exists('minLength', $inputProperties) ? $inputProperties['minLength'] : ''),
                     'maxLength' => (array_key_exists('maxLength', $inputProperties) ? $inputProperties['maxLength'] : ''),
                     'default' => $prop->get('default_text')
                 );
+                
+                if(count($elementArray) > 0 && $elementArray[0] !== ''){
+                   $ruleSet['enum'] = $elementArray;
+
+                }
+
+                // Remove unset rules
+                foreach($ruleSet as $key => &$rule){
+                    if($rule == ''){
+                        unset($ruleSet[$key]);
+                    }
+                }
             }
             
             $this->_properties[$propertyName] = array(
