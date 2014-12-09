@@ -445,7 +445,7 @@ class Simplx_Mirage_Class
             
             $this->_properties[$propertyName] = array(
                 'id' => $prop->get('id'),
-                'type' => (array_key_exists($prop->get('type'), $this->_propertyTypeMap) ? $prop->get('type') : $this->_propertyTypeMap['*']),
+                'type' => (array_key_exists($prop->get('type'), $this->_propertyTypeMap) ? $this->_propertyTypeMap[$prop->get('type')] : $this->_propertyTypeMap['*']),
                 'title' => $propertyName
             );
             
