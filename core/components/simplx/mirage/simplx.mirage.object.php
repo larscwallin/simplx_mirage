@@ -1152,16 +1152,23 @@ class Simplx_Mirage_Object
                 
                 $name = $tv->get('name');
                 
-                if (self::$_debugmode)
-                    $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->getTVValues(): Adding "' . $tv->get('name') . '" => "' . $tv->get('value') . '" to _properties.');
-                
-                
                 // Strip prefix away if configured to use prefixes.
                 if ($this->_prefixTvs) {
                     $name = str_replace($this->_tvPrefix, '', $name);
-                }
+                }                
                 
-                $this->_properties[$name] = $tv->get('value');
+                if(!array_key_exists($name, $this->_properties)){
+                
+                    if (self::$_debugmode)
+                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->getTVValues(): Adding "' . $tv->get('name') . '" => "' . $tv->get('value') . '" to _properties.');
+
+                    $this->_properties[$name] = $tv->get('value');
+
+                }else{
+                    if (self::$_debugmode)
+                        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Object->getTVValues(): _properties array already has a key called "' . $name . '" containing "'.$this->_properties[$name].'". Skipping so not to overwrite.');
+                    
+                }
             }
             
             $this->_tvsLoaded = true;
