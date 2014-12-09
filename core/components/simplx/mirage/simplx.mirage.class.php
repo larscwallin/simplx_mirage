@@ -497,7 +497,59 @@ class Simplx_Mirage_Class
         
     }
     
-    
+    /**
+     * 
+     *
+     * @param 
+     * @return 
+     */
+    public function createClassSQLView(){
+        global $modx;
+        
+        $objectPropertiesViewName = $modx->getOption('simplx.mirage.object.viewname'); 
+        $tablePrefix = ('`'.$modx->getOption(xPDO::OPT_TABLE_PREFIX).'`');
+        $modTemplateVarTemplateTable = $modx->getTableName('modTemplateVarTemplate');
+        $modTemplateVarTable = $modx->getTableName('modTemplateVar');
+        $modTemplateVarResourceTable = $modx->getTableName('modTemplateVarResource');
+        
+        if(!$objectPropertiesViewName){
+            $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Class->createClassSQLView(): Unable to find the "simplx.mirage.object.viewname" setting in MODx System Settings. Aborting.');
+            return false;
+            
+        }else{
+            $objectPropertiesViewName = ($objectPropertiesViewName.'.'.$this->_classTypeName);
+        }
+        
+        /*
+        	I suggest not removing the MERGE algorithm since not using it would ditch the underlying table indexes.
+        	Remember however that MERGE does not work well with aggregate functions and DISTINC, ORDER BY etc
+        */
+        $createViewQuery = '
+        CREATE OR REPLACE ALGORITHM=MERGE VIEW `'.$objectPropertiesViewName.'` AS 
+        SELECT  
+        	`val`.`contentid` AS `modresource.id`,
+        	`var`.`id` AS `modtemplatevar.id`,
+        	`tpl`.`templateid` AS `modtemplate.id`,
+        	`var`.`name` AS `modtemplatevar.name`,
+        	`val`.`value` AS `modtemplatevarresource.value`
+        FROM 
+        	'.$modTemplateVarTable.' AS  `var`, 
+        	'.$modTemplateVarResourceTable.' AS `val`, 
+        	'.$modTemplateVarTemplateTable.' AS `tpl` 
+        WHERE 
+        	`val`.`tmplvarid` = `var`.`id` 
+        	AND 
+        	`tpl`.`tmplvarid` = `var`.`id`
+        	AND
+        	`tpl`.`templateid` = '.$this->_id.'
+        	;
+        ';
+        $modx->log(modX::LOG_LEVEL_DEBUG, 'Simplx_Mirage_Class->createClassSQLView(): $createViewQuery = '.$createViewQuery);
+        $result = $modx->exec($createViewQuery);        
+        
+        return $result;
+    }  
+        
     
     /**
      * 
