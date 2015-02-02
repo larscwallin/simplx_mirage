@@ -470,7 +470,7 @@ class Simplx_Mirage_Class
     public function toJSON()
     {
         $result = $this->toArray();
-        $result = json_encode($result);
+        //$result = json_encode($result);
         
         if (!$result) {
             return false;
